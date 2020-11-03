@@ -8,6 +8,7 @@ public class AddressBookDBService {
 
 	private static AddressBookDBService addressBookDBService;
 	private static Logger log = Logger.getLogger(AddressBookDBService.class.getName());
+	private PreparedStatement ContactDataStatement;
 
 	private AddressBookDBService() {
 	}
@@ -19,7 +20,7 @@ public class AddressBookDBService {
 	}
 
 	public List<Contact> readData() {
-		String sql = "SELECT * from address_book";
+		String sql = "SELECT * FROM address_book";
 		return this.getContactDetailsUsingSqlQuery(sql);
 	}
 
@@ -58,8 +59,50 @@ public class AddressBookDBService {
 		return contactList;
 	}
 
+	public int updateEmployeeData(String name, String address) {
+		return this.updateContactDataUsingPreparedStatement(name, address);
+	}
+
+	private int updateContactDataUsingPreparedStatement(String firstName, String address) {
+		try (Connection connection = addressBookDBService.getConnection();) {
+			String sql = "update contacts set Address=? where firstName=?;";
+			PreparedStatement preparedStatement = connection.prepareStatement(sql);
+			preparedStatement.setString(1, address);
+			preparedStatement.setString(2, firstName);
+			int status = preparedStatement.executeUpdate();
+			return status;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return 0;
+	}
+
+	public List<Contact> getContactDataByName(String name) {
+		List<Contact> contactList = null;
+		if (this.ContactDataStatement == null)
+			this.prepareStatementForContactData();
+		try {
+			ContactDataStatement.setString(1, name);
+			ResultSet resultSet = ContactDataStatement.executeQuery();
+			contactList = this.getAddressBookData(resultSet);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return contactList;
+	}
+
+	private void prepareStatementForContactData() {
+		try {
+			Connection connection = addressBookDBService.getConnection();
+			String sql = "SELECT * FROM address_book WHERE firstName=?";
+			ContactDataStatement = connection.prepareStatement(sql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
 	private Connection getConnection() throws SQLException {
-		String jdbcURL = "jdbc:mysql://localhost:3306/address_book_service";
+		String jdbcURL = "jdbc:mysql://localhost:3306/address_book_service?useSSL=false";
 		String userName = "root";
 		String password = "Prem@1234";
 		Connection connection;
