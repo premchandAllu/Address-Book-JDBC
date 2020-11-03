@@ -41,4 +41,14 @@ public class AddressBookTest {
 		Assert.assertEquals(true, contactByCityOrStateMap.get("Hyderabad").equals(2));
 		Assert.assertEquals(true, contactByCityOrStateMap.get("TamilNadu").equals(1));
 	}
+	@Test
+	public void givenNewContact_WhenAdded_ShouldSyncWithDB() {
+		AddressBookService addressBookService = new AddressBookService();
+		addressBookService.readContactData();
+		LocalDate date = LocalDate.of(2020, 02, 20);
+		addressBookService.addContactToDatabase("Uma", "Rani", "Whitefield", "Bangalore", "Karnataka", 700012, 99084874,
+				"umarani@gmail.com", "Personal", "Family", date);
+		boolean result = addressBookService.checkContactInSyncWithDB("Uma");
+		Assert.assertTrue(result);
+	}
 }
