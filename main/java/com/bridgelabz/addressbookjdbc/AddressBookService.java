@@ -2,11 +2,13 @@ package com.bridgelabz.addressbookjdbc;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public class AddressBookService {
 
 	private List<Contact> contactList;
 	private AddressBookDBService addressBookDBService;
+	private Map<String, Integer> contactByCityOrState;
 
 	public AddressBookService(List<Contact> contactList) {
 		this();
@@ -43,5 +45,9 @@ public class AddressBookService {
 	public List<Contact> readContactDataForGivenDateRange(LocalDate startDate, LocalDate endDate) {
 		this.contactList = addressBookDBService.getContactForGivenDateRange(startDate, endDate);
 		return contactList;
+	}
+	public Map<String, Integer> readContactByCityOrState() {
+		this.contactByCityOrState=addressBookDBService.getContactsByCityOrState();
+		return contactByCityOrState;
 	}
 }
