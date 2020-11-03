@@ -1,15 +1,21 @@
 package com.bridgelabz.addressbookjdbc;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class AddressBookService {
-
 	private List<Contact> contactList;
 	private AddressBookDBService addressBookDBService;
 	private Map<String, Integer> contactByCityOrState;
+	
+	Logger log = Logger.getLogger(AddressBookService.class.getName()) ;
 
+	public enum IOService {
+		DB_IO
+	}
 	public AddressBookService(List<Contact> contactList) {
 		this();
 		this.contactList = contactList;
@@ -23,6 +29,16 @@ public class AddressBookService {
 		this.contactList = addressBookDBService.readData();
 		return contactList;
 	}
+	public long countEntries(IOService ioService) {
+		return contactList.size();
+	}
+
+	public List<Contact> readData(IOService ioService) {
+		if (ioService.equals(IOService.DB_IO))
+			this.contactList = addressBookDBService.readData();
+		return contactList;
+	}
+
 
 	public void updateContactDetails(String name, String address) {
 		int result = addressBookDBService.updateEmployeeData(name, address);
@@ -55,5 +71,46 @@ public class AddressBookService {
 		contactList.add(addressBookDBService.addContact(firstName, lastName, address, city, state, zip, phone, email,
 				addressBookName, startDate));
 
+	}
+	public void addContactToDB(String firstName, String lastName, String address, String city, String state, int zip,
+			int phone, String email, String addressBookName, LocalDate startDate) {
+		contactList.add(addressBookDBService.addContact(firstName, lastName, address, city, state, zip, phone, email,
+				addressBookName, startDate));
+
+	}
+
+	public void addContact(List<Contact> contactDataList) {
+		contactDataList.forEach(contactData -> {
+			log.info("Employee being added : " + contactData.firstName);
+			this.addContactToDB(contactData.firstName, contactData.lastName, contactData.address, contactData.city,
+					contactData.state, contactData.zip, contactData.phoneNumber, contactData.email,
+					contactData.addressBookName, contactData.getStartDate());
+			log.info("Employee added : " + contactData.firstName);
+		});
+		log.info("" + this.contactList);
+	}
+
+	public void addEmployeeToPayrollWithThreads(List<Contact> contactDataList) {
+		Map<Integer, Boolean> employeeAdditionStatus = new HashMap<>();
+		contactDataList.forEach(contactData -> {
+			Runnable task = () -> {
+				employeeAdditionStatus.put(contactData.hashCode(), false);
+				log.info("Employee being added : " + Thread.currentThread().getName());
+				this.addContactToDB(contactData.firstName, contactData.lastName, contactData.address, contactData.city,
+						contactData.state, contactData.zip, contactData.phoneNumber, contactData.email,
+						contactData.addressBookName, contactData.getStartDate());
+				employeeAdditionStatus.put(contactData.hashCode(), true);
+				log.info("Employee added : " + Thread.currentThread().getName());
+			};
+			Thread thread = new Thread(task, contactData.firstName);
+			thread.start();
+		});
+		while (employeeAdditionStatus.containsValue(false)) {
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+			}
+		}
+		log.info("" + this.contactList);
 	}
 }

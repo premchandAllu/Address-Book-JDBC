@@ -1,6 +1,7 @@
 package com.bridgelabz.addressbookjdbc;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 public class Contact {
 	public String firstName;
@@ -49,6 +50,19 @@ public class Contact {
 		this.phoneNumber = phoneNumber;
 		this.email = email;
 		this.addressBookName = addressBookName;
+		this.setStartDate(startDate);
+	}
+
+	public LocalDate getStartDate() {
+		return startDate;
+	}
+
+	public void setStartDate(LocalDate startDate) {
 		this.startDate = startDate;
+	}
+	@Override
+	public int hashCode() {
+		return Objects.hash(firstName, lastName, address, city, state, zip, phoneNumber, email, addressBookName,
+				startDate);
 	}
 }
