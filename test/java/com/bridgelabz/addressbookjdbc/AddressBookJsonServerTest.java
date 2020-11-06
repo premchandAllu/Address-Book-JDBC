@@ -3,6 +3,7 @@ package com.bridgelabz.addressbookjdbc;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
@@ -10,7 +11,11 @@ import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-import com.bridgelabz.addressbookjdbc.*;
+import com.google.gson.Gson;
+import AddressBookJDBC.AddressBookService.IOService;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 
 @FixMethodOrder(MethodSorters.JVM)
 public class AddressBookJsonServerTest {
@@ -38,6 +43,26 @@ public class AddressBookJsonServerTest {
 	}
 
 	@Test
+	public void givenNewSalaryForEmployee_WhenUpdatedUsingPreparedStatement_ShouldSyncWithDB() {
+		AddressBookService addressBookService = new AddressBookService();
+		List<Contact> contactList = addressBookService.readContactData();
+		addressBookService.updateContactDetails("Deeksha", "Kalpakkam");
+		boolean result = addressBookService.checkContactInSyncWithDB("Deeksha");
+		Assert.assertTrue(result);
+	}
+
+	@Test
+	public void givenNewContact_WhenAdded_ShouldSyncWithDB() {
+		AddressBookService addressBookService = new AddressBookService();
+		addressBookService.readContactData();
+		LocalDate date = LocalDate.of(2020, 02, 20);
+		addressBookService.addContactToDatabase("Uma", "Rani", "Whitefield", "Bangalore", "Karnataka", 700012, 99084874,
+				"umarani@gmail.com", "Personal", "Family", date);
+		boolean result = addressBookService.checkContactInSyncWithDB("Uma");
+		Assert.assertTrue(result);
+	}
+
+	@Test
 	public void givenNewListOfContacts_WhenAdded_ShouldMatch() {
 		AddressBookService addressBookService;
 		Contact[] arrayOfContacts = getContactList();
@@ -45,17 +70,17 @@ public class AddressBookJsonServerTest {
 		Contact[] contactArrays = {
 				new Contact("Monica", "Geller", "Manhanttan", "NYC", "NYC", 73410091, 90991212,
 						"mounikageller@gmail.com", "Casual", LocalDate.now()),
-				new Contact("Sourabh", "Harale", "DontKnow", "Hyderabad", "Telangana", 510119, 99797878,
-						"hsourabh@gmail.com", "corporate", LocalDate.now()) };
+				new Contact("Mohana", "Kavya", "Bhadrachalam", "Khammam", "Telangana", 510119, 99797878,
+						"mohanakavya@gmail.com", "corporate", LocalDate.now()) };
 		for (Contact contactData : contactArrays) {
 			Response response = addContactToJsonServer(contactData);
 			int statusCode = response.getStatusCode();
 			Assert.assertEquals(201, statusCode);
 			contactData = new Gson().fromJson(response.asString(), Contact.class);
-			addressBookService.addContactToAddressBook(contactData, com.bridgelabz.addressbookjdbc.AddressBookService.IOService.REST_IO);
+			addressBookService.addContactToAddressBook(contactData, IOService.REST_IO);
 		}
-		long entries = addressBookService.countEntries(com.bridgelabz.addressbookjdbc.AddressBookService.IOService.REST_IO);
-		Assert.assertEquals(5, entries);
+		long entries = addressBookService.countEntries(IOService.REST_IO);
+		Assert.assertEquals(6, entries);
 	}
 
 	@Test
@@ -63,7 +88,7 @@ public class AddressBookJsonServerTest {
 		Contact[] arrayOfContacts = getContactList();
 		AddressBookService addressBookService;
 		addressBookService = new AddressBookService(Arrays.asList(arrayOfContacts));
-		long entries = addressBookService.countEntries(com.bridgelabz.addressbookjdbc.AddressBookService.IOService.REST_IO);
+		long entries = addressBookService.countEntries(IOService.REST_IO);
 		Assert.assertEquals(5, entries);
 	}
 
@@ -72,7 +97,7 @@ public class AddressBookJsonServerTest {
 		AddressBookService addressBookService;
 		Contact[] arrayOfContacts = getContactList();
 		addressBookService = new AddressBookService(Arrays.asList(arrayOfContacts));
-		addressBookService.updateContactJsonServer("Uma", "Time Square", com.bridgelabz.addressbookjdbc.AddressBookService.IOService.REST_IO);
+		addressBookService.updateContactJsonServer("Uma", "Time Square", IOService.REST_IO);
 		Contact contactData = addressBookService.getContactData("Uma");
 		String contactJson = new Gson().toJson(contactData);
 		RequestSpecification request = RestAssured.given();
@@ -82,6 +107,7 @@ public class AddressBookJsonServerTest {
 		int statusCode = response.getStatusCode();
 		Assert.assertEquals(200, statusCode);
 	}
+
 	@Test
 	public void givenNewContactName_WhenRemoved_ShouldMatch200ResponseAndCount() {
 		AddressBookService addressBookService;
