@@ -1,24 +1,26 @@
 package com.bridgelabz.addressbookjdbc;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
 public class AddressBookService {
+
+	private static Logger log = Logger.getLogger(AddressBookService.class.getName());
 	private List<Contact> contactList;
-	private AddressBookDBService addressBookDBService;
 	private Map<String, Integer> contactByCityOrState;
-	
-	Logger log = Logger.getLogger(AddressBookService.class.getName()) ;
+	private AddressBookDBService addressBookDBService;
 
 	public enum IOService {
-		DB_IO
+		DB_IO, REST_IO
 	}
+
 	public AddressBookService(List<Contact> contactList) {
 		this();
-		this.contactList = contactList;
+		this.contactList = new ArrayList<>(contactList);
 	}
 
 	public AddressBookService() {
@@ -29,6 +31,7 @@ public class AddressBookService {
 		this.contactList = addressBookDBService.readData();
 		return contactList;
 	}
+
 	public long countEntries(IOService ioService) {
 		return contactList.size();
 	}
@@ -38,7 +41,6 @@ public class AddressBookService {
 			this.contactList = addressBookDBService.readData();
 		return contactList;
 	}
-
 
 	public void updateContactDetails(String name, String address) {
 		int result = addressBookDBService.updateEmployeeData(name, address);
@@ -62,20 +64,32 @@ public class AddressBookService {
 		this.contactList = addressBookDBService.getContactForGivenDateRange(startDate, endDate);
 		return contactList;
 	}
+
 	public Map<String, Integer> readContactByCityOrState() {
-		this.contactByCityOrState=addressBookDBService.getContactsByCityOrState();
+		this.contactByCityOrState = addressBookDBService.getContactsByCityOrState();
 		return contactByCityOrState;
 	}
+
 	public void addContactToDatabase(String firstName, String lastName, String address, String city, String state,
 			int zip, int phone, String email, String addressBookName, String addressBookType, LocalDate startDate) {
 		contactList.add(addressBookDBService.addContact(firstName, lastName, address, city, state, zip, phone, email,
 				addressBookName, startDate));
 
 	}
+
 	public void addContactToDB(String firstName, String lastName, String address, String city, String state, int zip,
 			int phone, String email, String addressBookName, LocalDate startDate) {
 		contactList.add(addressBookDBService.addContact(firstName, lastName, address, city, state, zip, phone, email,
 				addressBookName, startDate));
+
+	}
+
+	public void addContactToJSONServer(Contact contactData, IOService ioService) {
+		if (ioService.equals(IOService.DB_IO))
+			this.addContactToDB(contactData.firstName, contactData.lastName, contactData.address, contactData.city,
+					contactData.state, contactData.zip, contactData.phoneNumber, contactData.email,
+					contactData.addressBookName, contactData.startDate);
+		contactList.add(contactData);
 
 	}
 
@@ -84,7 +98,7 @@ public class AddressBookService {
 			log.info("Employee being added : " + contactData.firstName);
 			this.addContactToDB(contactData.firstName, contactData.lastName, contactData.address, contactData.city,
 					contactData.state, contactData.zip, contactData.phoneNumber, contactData.email,
-					contactData.addressBookName, contactData.getStartDate());
+					contactData.addressBookName, contactData.startDate);
 			log.info("Employee added : " + contactData.firstName);
 		});
 		log.info("" + this.contactList);
@@ -98,7 +112,7 @@ public class AddressBookService {
 				log.info("Employee being added : " + Thread.currentThread().getName());
 				this.addContactToDB(contactData.firstName, contactData.lastName, contactData.address, contactData.city,
 						contactData.state, contactData.zip, contactData.phoneNumber, contactData.email,
-						contactData.addressBookName, contactData.getStartDate());
+						contactData.addressBookName, contactData.startDate);
 				employeeAdditionStatus.put(contactData.hashCode(), true);
 				log.info("Employee added : " + Thread.currentThread().getName());
 			};
@@ -113,4 +127,5 @@ public class AddressBookService {
 		}
 		log.info("" + this.contactList);
 	}
+
 }

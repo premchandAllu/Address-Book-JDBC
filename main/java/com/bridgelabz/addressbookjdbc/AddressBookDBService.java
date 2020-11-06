@@ -22,7 +22,10 @@ public class AddressBookDBService {
 	}
 
 	public List<Contact> readData() {
-		String sql = "SELECT * FROM address_book";
+		String sql = "SELECT c.firstName, c.lastName,c.Address_Book_Name,c.Address,c.City,"
+				+ "c.State,c.Zip,c.Phone_Number,c.Email,a.Address_Book_Type "
+				+ "from contacts c inner join Address_Book_Dictionary a "
+				+ "on c.Address_Book_Name=a.Address_Book_Name; ";
 		return this.getContactDetailsUsingSqlQuery(sql);
 	}
 
@@ -44,6 +47,7 @@ public class AddressBookDBService {
 			while (resultSet.next()) {
 				String firstName = resultSet.getString("firstName");
 				String lastName = resultSet.getString("lastName");
+				String addressBookName = resultSet.getString("Address_Book_Name");
 				String address = resultSet.getString("Address");
 				String city = resultSet.getString("City");
 				String state = resultSet.getString("State");
@@ -51,9 +55,8 @@ public class AddressBookDBService {
 				int phoneNumber = resultSet.getInt("Phone_Number");
 				String email = resultSet.getString("email");
 				String addressBookType = resultSet.getString("Address_Book_Type");
-				String addressBookName = resultSet.getString("Address_Book_Name");
 				contactList.add(new Contact(firstName, lastName, address, city, state, zip, phoneNumber, email,
-						addressBookType, addressBookName));
+						addressBookName, addressBookType));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -92,7 +95,7 @@ public class AddressBookDBService {
 		}
 		return contactList;
 	}
-	
+
 	public List<Contact> getContactForGivenDateRange(LocalDate startDate, LocalDate endDate) {
 		String sql = String.format(
 				"SELECT c.firstName, c.lastName,c.Address_Book_Name,c.Address,c.City,"
@@ -102,6 +105,7 @@ public class AddressBookDBService {
 				Date.valueOf(startDate), Date.valueOf(endDate));
 		return this.getContactDetailsUsingSqlQuery(sql);
 	}
+
 	public Map<String, Integer> getContactsByCityOrState() {
 		Map<String, Integer> contactByCityOrStateMap = new HashMap<>();
 		ResultSet resultSet;
@@ -113,19 +117,20 @@ public class AddressBookDBService {
 			while (resultSet.next()) {
 				String city = resultSet.getString("city");
 				Integer count = resultSet.getInt("count");
-				contactByCityOrStateMap.put(city,count);
+				contactByCityOrStateMap.put(city, count);
 			}
 			resultSet = statement.executeQuery(sqlState);
 			while (resultSet.next()) {
 				String state = resultSet.getString("state");
 				Integer count = resultSet.getInt("count");
-				contactByCityOrStateMap.put(state,count);
+				contactByCityOrStateMap.put(state, count);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return contactByCityOrStateMap;
 	}
+
 	public Contact addContact(String firstName, String lastName, String address, String city, String state, int zip,
 			int phone, String email, String addressBookName, LocalDate startDate) {
 		Connection connection = null;
@@ -167,11 +172,13 @@ public class AddressBookDBService {
 		return new Contact(firstName, lastName, address, city, state, zip, phone, email, addressBookName, startDate);
 	}
 
-
 	private void prepareStatementForContactData() {
 		try {
 			Connection connection = addressBookDBService.getConnection();
-			String sql = "SELECT * FROM address_book WHERE firstName=?";
+			String sql = "SELECT c.firstName, c.lastName,c.Address_Book_Name,c.Address,c.City,"
+					+ "c.State,c.Zip,c.Phone_Number,c.Email,a.Address_Book_Type "
+					+ "from contacts c inner join Address_Book_Dictionary a "
+					+ "on c.Address_Book_Name=a.Address_Book_Name WHERE firstName=?; ";
 			ContactDataStatement = connection.prepareStatement(sql);
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -188,4 +195,5 @@ public class AddressBookDBService {
 		log.info("Connection successful: " + connection);
 		return connection;
 	}
+
 }

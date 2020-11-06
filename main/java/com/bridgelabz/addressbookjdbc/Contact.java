@@ -14,7 +14,7 @@ public class Contact {
 	public String email;
 	public String addressBookName;
 	public String addressBookType;
-	private LocalDate startDate;
+	LocalDate startDate;
 
 	public Contact(String firstName, String lastName, String address, String city, String state, int zip,
 			int phoneNumber, String email, String addressBookName, String addressBookType) {
