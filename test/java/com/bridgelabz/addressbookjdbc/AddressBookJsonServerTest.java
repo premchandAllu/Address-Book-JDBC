@@ -1,5 +1,6 @@
 package com.bridgelabz.addressbookjdbc;
 
+
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.logging.Logger;
@@ -9,10 +10,8 @@ import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-import com.bridgelabz.addressbookjdbc.AddressBookService.IOService;
-import io.restassured.RestAssured;
-import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
+import com.bridgelabz.addressbookjdbc.*;
+
 @FixMethodOrder(MethodSorters.JVM)
 public class AddressBookJsonServerTest {
 	private static Logger log = Logger.getLogger(AddressBookJsonServerTest.class.getName());
@@ -44,28 +43,43 @@ public class AddressBookJsonServerTest {
 		Contact[] arrayOfContacts = getContactList();
 		addressBookService = new AddressBookService(Arrays.asList(arrayOfContacts));
 		Contact[] contactArrays = {
-				new Contact("Mounika", "Geller", "Manhanttan", "NYC", "NYC", 73410091, 90991212, "mounikageller@gmail.com",
-						"Casual", LocalDate.now()),
-				new Contact("Mohana", "Kavya", "Bhadrachalam", "Khammam", "Telangana", 510119, 99797878, "mohanakavya@gmail.com",
-						"corporate", LocalDate.now()) };
+				new Contact("Monica", "Geller", "Manhanttan", "NYC", "NYC", 73410091, 90991212,
+						"mounikageller@gmail.com", "Casual", LocalDate.now()),
+				new Contact("Sourabh", "Harale", "DontKnow", "Hyderabad", "Telangana", 510119, 99797878,
+						"hsourabh@gmail.com", "corporate", LocalDate.now()) };
 		for (Contact contactData : contactArrays) {
 			Response response = addContactToJsonServer(contactData);
 			int statusCode = response.getStatusCode();
 			Assert.assertEquals(201, statusCode);
 			contactData = new Gson().fromJson(response.asString(), Contact.class);
-			addressBookService.addContactToAddressBook(contactData, IOService.REST_IO);
+			addressBookService.addContactToAddressBook(contactData, com.bridgelabz.addressbookjdbc.AddressBookService.IOService.REST_IO);
 		}
-		long entries = addressBookService.countEntries(IOService.REST_IO);
+		long entries = addressBookService.countEntries(com.bridgelabz.addressbookjdbc.AddressBookService.IOService.REST_IO);
 		Assert.assertEquals(5, entries);
 	}
-	
+
 	@Test
 	public void givenContactDataInJsonServer_WhenRetrived_ShouldMatchCount() {
 		Contact[] arrayOfContacts = getContactList();
 		AddressBookService addressBookService;
 		addressBookService = new AddressBookService(Arrays.asList(arrayOfContacts));
-		long entries = addressBookService.countEntries(IOService.REST_IO);
+		long entries = addressBookService.countEntries(com.bridgelabz.addressbookjdbc.AddressBookService.IOService.REST_IO);
 		Assert.assertEquals(5, entries);
 	}
-	
+
+	@Test
+	public void givenNewContact_WhenUpdated_ShouldMatch200Response() {
+		AddressBookService addressBookService;
+		Contact[] arrayOfContacts = getContactList();
+		addressBookService = new AddressBookService(Arrays.asList(arrayOfContacts));
+		addressBookService.updateContactJsonServer("Uma", "Time Square", com.bridgelabz.addressbookjdbc.AddressBookService.IOService.REST_IO);
+		Contact contactData = addressBookService.getContactData("Uma");
+		String contactJson = new Gson().toJson(contactData);
+		RequestSpecification request = RestAssured.given();
+		request.header("Content-Type", "application/json");
+		request.body(contactJson);
+		Response response = request.put("/contacts/" + contactData.id);
+		int statusCode = response.getStatusCode();
+		Assert.assertEquals(200, statusCode);
+	}
 }
